@@ -1,0 +1,124 @@
+import React, { useState } from 'react';
+import { GoogleSheetConfig } from '../types';
+import { useLanguage } from '../context/LanguageContext';
+
+interface GoogleSheetsIntegrationProps {
+  config: GoogleSheetConfig;
+  onConnect: (spreadsheetId: string) => void;
+  onDisconnect: () => void;
+  onClose: () => void;
+}
+
+export const GoogleSheetsIntegration: React.FC<GoogleSheetsIntegrationProps> = ({
+  config,
+  onConnect,
+  onDisconnect,
+  onClose,
+}) => {
+  const { t } = useLanguage();
+  const [spreadsheetId, setSpreadsheetId] = useState(config.spreadsheetId);
+
+  const handleConnect = () => {
+    if (spreadsheetId.trim()) {
+      onConnect(spreadsheetId.trim());
+    }
+  };
+
+  const handleDisconnect = () => {
+    onDisconnect();
+    setSpreadsheetId('');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <div>
+            <h4 className="font-semibold text-blue-900 mb-1">Cómo conectar Google Sheets</h4>
+            <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+              <li>Crea una Google Sheet con las columnas de tu flota</li>
+              <li>Copia el ID de la hoja (parte de la URL entre /d/ y /edit)</li>
+              <li>Pega el ID abajo y conecta</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      {config.isConnected ? (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-green-900 mb-2">{t('connected')}</h3>
+          <p className="text-sm text-green-700 mb-4 break-all">{config.spreadsheetId}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={handleDisconnect}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              {t('disconnect')}
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-[#FF9900] text-white rounded-lg hover:bg-[#ec8b00] transition-colors font-medium"
+            >
+              {t('close')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('spreadsheetId')}
+            </label>
+            <input
+              type="text"
+              value={spreadsheetId}
+              onChange={(e) => setSpreadsheetId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF9900] focus:border-transparent"
+              placeholder={t('spreadsheetIdPlaceholder')}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Ejemplo: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={!spreadsheetId.trim()}
+              className="flex-1 px-6 py-3 bg-[#FF9900] text-white rounded-lg hover:bg-[#ec8b00] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t('connect')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="border-t pt-4">
+        <h4 className="font-semibold text-gray-900 mb-3">Columnas requeridas en Google Sheets:</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          {['Van Number', 'Van Type', 'VIN', 'Plate', 'Registration Exp.', 'Asset Status', 'Mileage', 'Operational Status', 'Issues', 'Date Reported', 'Driver at fault', 'Days Grounded', 'Pave Due By', 'Last Pave', 'Pending Maintenance', 'Date Sent for Repair', 'Location of Van', 'Estimate Date for Repair'].map((col) => (
+            <div key={col} className="bg-gray-100 px-2 py-1 rounded text-center text-gray-700">
+              {col}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

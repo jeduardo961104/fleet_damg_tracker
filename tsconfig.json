@@ -1,0 +1,153 @@
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+
+interface OnboardingStep {
+  target: string;
+  title: string;
+  content: string;
+}
+
+export const Onboarding: React.FC = () => {
+  const { language } = useLanguage();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+
+  const steps: OnboardingStep[] = language === 'es' ? [
+    {
+      target: '[data-tour="stats"]',
+      title: 'Resumen de Flota',
+      content: 'Aquí puedes ver rápidamente cuántas vans tienes y cuántos daños están activos.'
+    },
+    {
+      target: '[data-tour="add-van"]',
+      title: 'Agregar Vehículos',
+      content: 'Usa este botón para añadir una nueva van a tu sistema de tracking.'
+    },
+    {
+      target: '[data-tour="report-damage"]',
+      title: 'Reportar Incidencias',
+      content: 'Cuando una van tenga un nuevo daño, repórtalo aquí con fotos y detalles del conductor.'
+    },
+    {
+      target: '[data-tour="tabs"]',
+      title: 'Navegación',
+      content: 'Cambia entre la vista de tu flota completa y el historial de daños.'
+    },
+    {
+      target: '[data-tour="sheets"]',
+      title: 'Sincronización',
+      content: 'Conecta tu Google Sheets para mantener los datos respaldados en la nube.'
+    }
+  ] : [
+    {
+      target: '[data-tour="stats"]',
+      title: 'Fleet Summary',
+      content: 'Quickly see how many vans you have and how many damages are active.'
+    },
+    {
+      target: '[data-tour="add-van"]',
+      title: 'Add Vehicles',
+      content: 'Use this button to add a new van to your tracking system.'
+    },
+    {
+      target: '[data-tour="report-damage"]',
+      title: 'Report Issues',
+      content: 'When a van has a new damage, report it here with photos and driver details.'
+    },
+    {
+      target: '[data-tour="tabs"]',
+      title: 'Navigation',
+      content: 'Switch between your full fleet view and damage history.'
+    },
+    {
+      target: '[data-tour="sheets"]',
+      title: 'Synchronization',
+      content: 'Connect your Google Sheets to keep your data backed up in the cloud.'
+    }
+  ];
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeenOnboarding) {
+      setTimeout(() => setIsVisible(true), 1000);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isVisible) {
+      const element = document.querySelector(steps[currentStep].target);
+      if (element) {
+        setTargetRect(element.getBoundingClientRect());
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [isVisible, currentStep, language]);
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleClose();
+    }
+  };
+
+  const handleClose = () => {
+    setIsVisible(false);
+    localStorage.setItem('hasSeenOnboarding', 'true');
+  };
+
+  if (!isVisible || !targetRect) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] pointer-events-none">
+      <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={handleClose} />
+      
+      {/* Highlight area */}
+      <div 
+        className="absolute border-2 border-[#FF9900] rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] transition-all duration-300"
+        style={{
+          top: targetRect.top - 8,
+          left: targetRect.left - 8,
+          width: targetRect.width + 16,
+          height: targetRect.height + 16,
+        }}
+      />
+
+      {/* Popover */}
+      <div 
+        className="absolute bg-white rounded-xl shadow-2xl p-6 w-80 pointer-events-auto transition-all duration-300"
+        style={{
+          top: targetRect.bottom + 24 > window.innerHeight - 200 ? targetRect.top - 220 : targetRect.bottom + 24,
+          left: Math.min(Math.max(20, targetRect.left + (targetRect.width / 2) - 160), window.innerWidth - 340),
+        }}
+      >
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-bold text-lg text-gray-900">{steps[currentStep].title}</h3>
+          <span className="text-xs font-medium text-gray-400">
+            {currentStep + 1} / {steps.length}
+          </span>
+        </div>
+        <p className="text-gray-600 text-sm mb-6">
+          {steps[currentStep].content}
+        </p>
+        <div className="flex justify-between items-center">
+          <button 
+            onClick={handleClose}
+            className="text-sm font-medium text-gray-400 hover:text-gray-600"
+          >
+            {language === 'es' ? 'Saltar' : 'Skip'}
+          </button>
+          <button 
+            onClick={handleNext}
+            className="bg-[#FF9900] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#e68a00] transition-colors"
+          >
+            {currentStep === steps.length - 1 
+              ? (language === 'es' ? 'Finalizar' : 'Finish')
+              : (language === 'es' ? 'Siguiente' : 'Next')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
